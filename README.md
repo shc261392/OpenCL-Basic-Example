@@ -4,7 +4,10 @@ This is a basic example for both OpenCL C and OpenCL C++, serving a main purpose
 
 ## Getting Started
 
-Since there are already tons of resources for OpenCL C on web, unless otherwise noted, all the following instructions are for OpenCL C++.
+* Check the sample.cpp for host code example.
+* Check the kernels/vector_add.cl for OpenCL C kernel code example.
+* Check the kernels/cpp_vector_add.cl for OpenCL C++ kernel code example.
+* Check the Makefile for compilation process of OpenCL C++ kernel to SPIR-V.
 
 ### Prerequisites
 
