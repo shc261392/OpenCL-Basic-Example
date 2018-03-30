@@ -55,4 +55,5 @@ clang:
 .PHONY: clean
 
 clean:
-	rm sample
+	rm -f sample
+	rm -f /kernels/*.ll /kernels/*.bc /kernels/*.spt /kernels/*.spv
