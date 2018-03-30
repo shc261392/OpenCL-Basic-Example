@@ -23,6 +23,10 @@
 // ----- Debugging Info Printer -------------------
 #define DEBUG_VERBOSE
 // ------------------------------------------------
+// ----- Use OpenCL C++ ---------------------------
+#define OCL_CXX
+// ------------------------------------------------
+
 
 
 cl_context CreateContextForDefaultDevice()
@@ -41,6 +45,7 @@ cl_context CreateContextForDefaultDevice()
     ERR();
 
     #ifdef DEBUG_VERBOSE
+    // Print all platform names
     for ( auto it = platforms.begin(); it != platforms.end(); ++it )
     {
         std::string platform_name;
@@ -99,10 +104,6 @@ cl_program CreateProgramWithSource( cl_context* context, const char* filename )
     std::ifstream infile { filename };
     std::string program_source { std::istreambuf_iterator<char>(infile), std::istreambuf_iterator<char>() };
 
-    #ifdef DEBUG_VERBOSE
-    std::cout << "Program source: " << std::endl << program_source << std::endl;
-    #endif
-
     // Create program from source    
     const char* src = program_source.c_str();
     cl_program program = clCreateProgramWithSource( *context, 1, &src, 0, &err );
@@ -115,9 +116,32 @@ cl_program CreateProgramWithSource( cl_context* context, const char* filename )
     return program;
 }
 
-cl_program CreateProgramFromIL()
+cl_program CreateProgramWithIL(cl_context *context, std::string filename)
 {
-    cl_program program;
+    cl_int err;
+    void *il;
+    size_t sz;
+
+    // Read SPIR-V binary (.spv) from file
+    std::ifstream in(filename, std::ios::in | std::ios::binary);
+    if (in)
+    {
+        in.seekg( 0, std::ios::end );
+        sz = in.tellg();
+        il = calloc( sz , sizeof(char));
+        in.seekg( 0, std::ios::beg );
+        in.read( (char*)il, sz );
+        in.close();
+    }
+
+    // Create program with IL
+    cl_program program = clCreateProgramWithIL( *context, il, sz, &err);
+    ERR();
+
+    // Build program
+    // Note that for OpenCL C++, no compilers flags can be passed here
+    err = clBuildProgram( program, 0, NULL, NULL, NULL, NULL);
+    ERR();
     return program;
 }
 
@@ -183,19 +207,24 @@ void EnqueueKernel( cl_command_queue* queue, cl_kernel* kernel, cl_uint work_dim
     cl_event event;
     double time_start, time_end;
 
-    // Enqueue kernel without profiling and local work size assignment
-    err = clEnqueueNDRangeKernel( *queue, *kernel, work_dim, global_work_size, NULL, NULL, 0, NULL, &event);
+    // Enqueue kernel with profiling, without local work size assignment
+    err = clEnqueueNDRangeKernel( *queue, *kernel, work_dim, NULL, global_work_size, NULL, 0, NULL, &event);
     ERR();
+
+    // Blocking until the event is returned for profiling
     err = clWaitForEvents(1, &event);
     ERR();
+
+    // Get profiled start time and end time of kernel
     err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
     ERR();
     err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
     ERR();
     double elapsed = time_end - time_start;
-    std::cout << "Kernel: execution time: " << elapsed/1000000.0 << " ms" <<std::endl;
+    std::cout << "Kernel execution time: " << elapsed/1000000.0 << " ms" <<std::endl;
 }
 
+// General OpenCL object release template specialization
 template <typename T>
 void ReleaseCL(T t)
 {
@@ -239,28 +268,56 @@ void ReleaseCL( cl_mem* buffer)
 int main(int argc, char* argv[])
 {
     typedef float Numeric_Type;
+
+    // Create host vectors
     cl_uint vector_size = 10000000;
-    std::vector<Numeric_Type> vector_a( vector_size, 1 );
-    std::vector<Numeric_Type> vector_b( vector_size, 3 );
+    std::vector<Numeric_Type> vector_a( vector_size, 10 );
+    std::vector<Numeric_Type> vector_b( vector_size, 32 );
     std::vector<Numeric_Type> vector_res( vector_size, 0 ) ;
+    std::vector<Numeric_Type> vector_val( vector_size, 42 ) ;
 
-    cl_int err;
-    size_t global_work_size = 10000000;
+    size_t global_work_size = 1000;
 
+    #ifdef OCL_CXX
+    std::string version = "OpenCL C++";
+    #else
+    std::string version = "OpenCL C";
+    #endif
+    std::string kernel_name = "float_vector_add";
+
+    // Create context and command queue
     cl_context context = CreateContextForDefaultDevice();
     cl_command_queue queue = CreateCommandQueue( &context );
-    cl_program program = CreateProgramWithSource( &context, "vector_add.cl" );
-    cl_kernel kernel = CreateKernel( &program, "float_vector_add" );
 
+    // Either create OpenCL C++ program or OpenCL C program
+    // For host code, this is the only difference for OCL C and C++
+    #ifdef OCL_CXX
+    cl_program program = CreateProgramWithIL( &context, "kernels/cpp_vector_add.spv" );
+    #else
+    cl_program program = CreateProgramWithSource( &context, "kernels/vector_add.cl" );
+    #endif
+
+    // Display information
+    std::cout << "=============================================" << std::endl;
+    std::cout << "Testing " << version << " kernel: " << kernel_name << std::endl;
+    std::cout << "Vector size: " << vector_size << std::endl;
+    std::cout << "Global work size: " << global_work_size <<std::endl;
+
+    // Create kernel by program and function name
+    cl_kernel kernel = CreateKernel( &program, kernel_name.c_str() );
+
+    // arg2 = 1 if there is data to be copied to buffer
     cl_mem cl_a = CreateBuffer( &context, 1, sizeof(Numeric_Type) * vector_size, vector_a.data() );
     cl_mem cl_b = CreateBuffer( &context, 1, sizeof(Numeric_Type) * vector_size, vector_b.data() );
     cl_mem cl_res = CreateBuffer ( &context, 0, sizeof(Numeric_Type) * vector_size, NULL );
 
+    // Set kernel arguments
     SetKernelArg( &kernel, 0, sizeof(cl_mem), &cl_a );
     SetKernelArg( &kernel, 1, sizeof(cl_mem), &cl_b );
     SetKernelArg( &kernel, 2, sizeof(cl_mem), &cl_res );
     SetKernelArg( &kernel, 3, sizeof(cl_uint), &vector_size );
 
+    // Map buffer, copy host vector to mapped pointer, unmap to sync with device
     Numeric_Type* map_ptr_a = (Numeric_Type*)QuickMap( &queue, &cl_a, 1, sizeof(Numeric_Type) * vector_size );
     Numeric_Type* map_ptr_b = (Numeric_Type*)QuickMap( &queue, &cl_b, 1, sizeof(Numeric_Type) * vector_size );
     memcpy( map_ptr_a, vector_a.data(), sizeof(Numeric_Type) * vector_size );
@@ -268,13 +325,15 @@ int main(int argc, char* argv[])
     QuickUnmap( &queue, &cl_a, map_ptr_a );
     QuickUnmap( &queue, &cl_b, map_ptr_b );
 
+    // Enqueue kernel and wait for execution
     EnqueueKernel( &queue, &kernel, 1, &global_work_size );
-    clFinish( queue );
 
+    // Map buffer, copy mapped pointer back to host vector, then unmap
     Numeric_Type* map_ptr_res = (Numeric_Type*)QuickMap( &queue, &cl_res, 0, sizeof(Numeric_Type) * vector_size );
     memcpy( vector_res.data(), map_ptr_res, sizeof(Numeric_Type) * vector_size );
     QuickUnmap( &queue, &cl_res, map_ptr_res );
 
+    // Release OpenCL objects
     ReleaseCL( kernel );
     ReleaseCL( program );
     ReleaseCL( cl_a );
@@ -283,14 +342,16 @@ int main(int argc, char* argv[])
     ReleaseCL( queue );
     ReleaseCL( context );
 
-    int c=0;
+    int flag = 0;
     for ( auto it = vector_res.begin(); it != vector_res.end(); ++it )
-
     {
-        c++;
-        if (c>10) break;
-        std::cout << *it << std::endl;
+        if ( abs( *it - 42 ) > 1e-4 )
+        {
+            flag = 1;
+            break;
+        }
     }
+    flag == 0 ? std::cout << "SUCCESS\n" : std::cout << "FAILURE\n";
 
     return 0;
 }

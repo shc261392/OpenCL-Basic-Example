@@ -1,0 +1,196 @@
+119734787 65536 393230 95 0 
+2 Capability Addresses 
+2 Capability Linkage 
+2 Capability Kernel 
+2 Capability Int64 
+2 Capability GenericPointer 
+5 ExtInstImport 1 "OpenCL.std"
+3 MemoryModel 2 2 
+8 EntryPoint 6 12 "float_vector_add"
+3 Source 4 202000 
+9 Name 5 "__spirv_BuiltInGlobalSize"
+11 Name 6 "__spirv_BuiltInGlobalInvocationId"
+5 Name 13 "a.coerce"
+5 Name 14 "b.coerce"
+6 Name 15 "result.coerce"
+5 Name 16 "vector_size"
+4 Name 17 "entry"
+4 Name 18 "sw.bb.i"
+5 Name 19 "sw.bb1.i"
+5 Name 20 "sw.bb2.i"
+6 Name 21 "sw.default.i"
+10 Name 22 "_ZN2cl13get_global_idEj.exit"
+5 Name 23 "for.cond"
+5 Name 24 "for.body"
+4 Name 25 "for.inc"
+5 Name 26 "sw.bb.i18"
+5 Name 27 "sw.bb1.i19"
+5 Name 28 "sw.bb2.i20"
+6 Name 29 "sw.default.i21"
+10 Name 30 "_ZN2cl15get_global_sizeEj.exit"
+4 Name 31 "for.end"
+10 Name 32 "class.cl::global_ptr<float []>"
+31 Name 33 "class.cl::__details::__as_ptr_impl<float [], add_global, global_ptr, cl::__details::__as_ptr_type::__as_ptr_array>"
+3 Name 35 "a"
+3 Name 36 "b"
+4 Name 37 "result"
+5 Name 40 "coerce.dive"
+6 Name 42 "coerce.dive1"
+6 Name 43 "coerce.dive2"
+6 Name 44 "coerce.dive3"
+6 Name 45 "coerce.dive4"
+6 Name 46 "coerce.dive5"
+5 Name 54 "retval.i.0"
+4 Name 55 "conv"
+4 Name 56 "conv15"
+4 Name 57 "idx.0"
+3 Name 59 "cmp"
+4 Name 61 "conv6"
+5 Name 65 "__ptr.i.i34"
+6 Name 67 "arrayidx.i35"
+4 Name 70 "conv8"
+5 Name 72 "__ptr.i.i27"
+6 Name 74 "arrayidx.i28"
+3 Name 76 "add"
+4 Name 78 "conv10"
+5 Name 80 "__ptr.i.i"
+5 Name 82 "arrayidx.i"
+6 Name 90 "retval.i16.0"
+4 Name 91 "conv13"
+4 Name 92 "add14"
+4 Decorate 94 Alignment 8 
+2 DecorationGroup 94 
+4 Decorate 6 BuiltIn 28 
+4 Decorate 5 BuiltIn 31 
+11 Decorate 5 LinkageAttributes "__spirv_BuiltInGlobalSize" Import 
+13 Decorate 6 LinkageAttributes "__spirv_BuiltInGlobalInvocationId" Import 
+5 GroupDecorate 94 35 36 37 
+4 TypeInt 2 64 0 
+4 TypeInt 10 32 0 
+4 Constant 10 38 0 
+5 Constant 2 53 0 0 
+5 Constant 2 89 1 0 
+4 TypeVector 3 2 3 
+4 TypePointer 4 5 3 
+2 TypeVoid 7 
+3 TypeFloat 8 32 
+4 TypePointer 9 5 8 
+7 TypeFunction 11 7 9 9 9 10 
+3 TypeStruct 33 9 
+3 TypeStruct 32 33 
+4 TypePointer 34 7 32 
+4 TypePointer 39 7 33 
+4 TypePointer 41 7 9 
+2 TypeBool 58 
+4 TypePointer 62 8 33 
+4 TypePointer 64 8 9 
+4 Variable 4 5 5 
+4 Variable 4 6 5 
+
+5 Function 7 12 0 11 
+3 FunctionParameter 9 13 
+3 FunctionParameter 9 14 
+3 FunctionParameter 9 15 
+3 FunctionParameter 10 16 
+
+2 Label 17 
+4 Variable 34 35 7 
+4 Variable 34 36 7 
+4 Variable 34 37 7 
+6 PtrAccessChain 39 40 35 38 38 
+6 PtrAccessChain 41 42 40 38 38 
+3 Store 42 13 
+6 PtrAccessChain 39 43 36 38 38 
+6 PtrAccessChain 41 44 43 38 38 
+3 Store 44 14 
+6 PtrAccessChain 39 45 37 38 38 
+6 PtrAccessChain 41 46 45 38 38 
+3 Store 46 15 
+9 Switch 38 21 0 18 1 19 2 20 
+
+2 Label 18 
+6 Load 3 47 6 2 32 
+5 CompositeExtract 2 48 47 0 
+2 Branch 22 
+
+2 Label 19 
+6 Load 3 49 6 2 32 
+5 CompositeExtract 2 50 49 1 
+2 Branch 22 
+
+2 Label 20 
+6 Load 3 51 6 2 32 
+5 CompositeExtract 2 52 51 2 
+2 Branch 22 
+
+2 Label 21 
+2 Branch 22 
+
+2 Label 22 
+11 Phi 2 54 53 21 52 20 50 19 48 18 
+4 UConvert 10 55 54 
+2 Branch 23 
+
+2 Label 23 
+7 Phi 10 57 55 22 56 30 
+5 ULessThan 58 59 57 16 
+4 BranchConditional 59 24 31 
+
+2 Label 24 
+4 Bitcast 39 60 35 
+4 UConvert 2 61 57 
+4 PtrCastToGeneric 62 63 60 
+6 InBoundsPtrAccessChain 64 65 63 38 38 
+6 Load 9 66 65 2 8 
+5 InBoundsPtrAccessChain 9 67 66 61 
+4 Load 8 68 67 
+4 Bitcast 39 69 36 
+4 UConvert 2 70 57 
+4 PtrCastToGeneric 62 71 69 
+6 InBoundsPtrAccessChain 64 72 71 38 38 
+6 Load 9 73 72 2 8 
+5 InBoundsPtrAccessChain 9 74 73 70 
+4 Load 8 75 74 
+5 FAdd 8 76 68 75 
+4 Bitcast 39 77 37 
+4 UConvert 2 78 57 
+4 PtrCastToGeneric 62 79 77 
+6 InBoundsPtrAccessChain 64 80 79 38 38 
+6 Load 9 81 80 2 8 
+5 InBoundsPtrAccessChain 9 82 81 78 
+3 Store 82 76 
+2 Branch 25 
+
+2 Label 25 
+9 Switch 38 29 0 26 1 27 2 28 
+
+2 Label 26 
+6 Load 3 83 5 2 32 
+5 CompositeExtract 2 84 83 0 
+2 Branch 30 
+
+2 Label 27 
+6 Load 3 85 5 2 32 
+5 CompositeExtract 2 86 85 1 
+2 Branch 30 
+
+2 Label 28 
+6 Load 3 87 5 2 32 
+5 CompositeExtract 2 88 87 2 
+2 Branch 30 
+
+2 Label 29 
+2 Branch 30 
+
+2 Label 30 
+11 Phi 2 90 89 29 88 28 86 27 84 26 
+4 UConvert 2 91 57 
+5 IAdd 2 92 91 90 
+4 UConvert 10 56 92 
+2 Branch 23 
+
+2 Label 31 
+1 Return 
+
+1 FunctionEnd 
+
