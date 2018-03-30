@@ -56,4 +56,4 @@ clang:
 
 clean:
 	rm -f sample
-	rm -f /kernels/*.ll /kernels/*.bc /kernels/*.spt /kernels/*.spv
+	rm -f ./kernels/*.ll ./kernels/*.bc ./kernels/*.spt ./kernels/*.spv
