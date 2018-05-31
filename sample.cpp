@@ -185,27 +185,26 @@ void QuickUnmap( cl_command_queue* queue, cl_mem* buffer, void* mapped_ptr )
     ERR();
 }
 
-void EnqueueKernel( cl_command_queue* queue, cl_kernel* kernel, cl_uint work_dim, const size_t* global_work_size )
+double EnqueueKernel( cl_command_queue* queue, cl_kernel* kernel, cl_uint work_dim, const size_t* global_work_size )
 {
     cl_int err;
     cl_event event;
-    double time_start, time_end;
 
-    // Enqueue kernel with profiling, without local work size assignment
+    // Enqueue kernel once before time measurement to exclude kernel setup overhead for OpenCL
     err = clEnqueueNDRangeKernel( *queue, *kernel, work_dim, NULL, global_work_size, NULL, 0, NULL, &event);
     ERR();
-
-    // Blocking until the event is returned for profiling
-    err = clWaitForEvents(1, &event);
+    err = clFinish( *queue );
     ERR();
 
-    // Get profiled start time and end time of kernel
-    err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_START, sizeof(time_start), &time_start, NULL);
+    auto time_start = std::chrono::high_resolution_clock::now();
+    // Enqueue kernel without local work size assignment
+    err = clEnqueueNDRangeKernel( *queue, *kernel, work_dim, NULL, global_work_size, NULL, 0, NULL, &event);
     ERR();
-    err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
+    err = clFinish( *queue );
     ERR();
-    double elapsed = time_end - time_start;
-    std::cout << "Kernel execution time: " << elapsed/1.0 << " ns" <<std::endl;
+    auto time_finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> ocl_elapsed = time_finish - time_start;
+    return ocl_elapsed.count()*1000000;
 }
 
 // General OpenCL object release template specialization
@@ -249,41 +248,58 @@ void ReleaseCL( cl_mem* buffer)
     ERR();
 }
 
-template< typename T >
-std::vector<T> rand_gen( size_t size )
-{
-    std::vector<T> vec( size );
-    return vec;
-}
-
-
 int main(int argc, char* argv[])
 {
+    std::string version = "OpenCL C";
+    std::string kernel_name = "float_vector_add";
+    size_t vector_size, global_work_size;
+    // Parse command line arguments
+    if ( argc < 3 )
+    {
+        std::cerr << "Usage: " << argv[0] << " VECTOR_SIZE GLOBAL_WORK_SIZE" << std::endl;
+        return 1;
+    }
+    else
+    {
+        vector_size = std::stoi(argv[1]);
+        global_work_size = std::stoi(argv[2]);
+    }
+
     typedef float Numeric_Type;
 
     // Create host vectors
-    size_t vector_size = 10000000;
-    std::vector<Numeric_Type> vector_a( vector_size, 10 );
-    std::vector<Numeric_Type> vector_b( vector_size, 32 );
-    std::vector<Numeric_Type> vector_res( vector_size, 0 ) ;
-    std::vector<Numeric_Type> vector_val( vector_size, 42 ) ;
+    std::vector<Numeric_Type> vector_a( vector_size );
+    std::vector<Numeric_Type> vector_b( vector_size  );
+    std::vector<Numeric_Type> vector_res( vector_size ) ;
+    std::vector<Numeric_Type> vector_val( vector_size ) ;
 
-    size_t global_work_size = 1000;
+    // Generate Random value for testing
+    std::random_device rd;
+    std::mt19937_64 generator(rd());
+    std::uniform_real_distribution<> dist{-10000, 10000};
+    for ( uint i = 0; i < vector_size; i++ )
+    {
+        vector_a[i] = dist(generator);
+        vector_b[i] = dist(generator);
+    }
 
-    std::string version = "OpenCL C";
-    std::string kernel_name = "float_vector_add";
+    // Creating validation vector & measuring C++ performance for vector_add
+    auto time_start = std::chrono::high_resolution_clock::now();
+    for ( uint i = 0; i < vector_size; i++ )
+    {
+        vector_val[i] = vector_a[i] + vector_b[i];
+    }
+    auto time_finish = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> cpp_elapsed = time_finish - time_start;
+    double cpp_time = cpp_elapsed.count()*1000000;
+
 
     // Create context and command queue
     cl_context context = CreateContextForDefaultDevice();
     cl_command_queue queue = CreateCommandQueue( &context );
 
-    // Either create OpenCL C++ program or OpenCL C program
-    // For host code, this is the only difference for OCL C and C++
-    #ifdef OCL_CXX
-    cl_program program = CreateProgramWithIL( &context, "kernels/cpp_vector_add.spv" );
-    #else
+    // Create OpenCL C program
     cl_program program = CreateProgramWithSource( &context, "kernels/vector_add.cl" );
-    #endif
 
     // Display information
     std::cout << "=============================================" << std::endl;
@@ -305,7 +321,7 @@ int main(int argc, char* argv[])
     SetKernelArg( &kernel, 2, sizeof(cl_mem), &cl_res );
     SetKernelArg( &kernel, 3, sizeof(cl_uint), &vector_size );
 
-    // Map buffer, copy host vector to mapped pointer, unmap to sync with device
+    // Map buffer, copy host vector to mapped pointer, unmap to synchronize with device
     Numeric_Type* map_ptr_a = (Numeric_Type*)QuickMap( &queue, &cl_a, 1, sizeof(Numeric_Type) * vector_size );
     Numeric_Type* map_ptr_b = (Numeric_Type*)QuickMap( &queue, &cl_b, 1, sizeof(Numeric_Type) * vector_size );
     memcpy( map_ptr_a, vector_a.data(), sizeof(Numeric_Type) * vector_size );
@@ -314,7 +330,7 @@ int main(int argc, char* argv[])
     QuickUnmap( &queue, &cl_b, map_ptr_b );
 
     // Enqueue kernel and wait for execution
-    EnqueueKernel( &queue, &kernel, 1, &global_work_size );
+    double ocl_time = EnqueueKernel( &queue, &kernel, 1, &global_work_size );
 
     // Map buffer, copy mapped pointer back to host vector, then unmap
     Numeric_Type* map_ptr_res = (Numeric_Type*)QuickMap( &queue, &cl_res, 0, sizeof(Numeric_Type) * vector_size );
@@ -330,16 +346,24 @@ int main(int argc, char* argv[])
     ReleaseCL( queue );
     ReleaseCL( context );
 
+    // Validate the execution by comparing result vectors of OpenCL and C++
     int flag = 0;
-    for ( auto it = vector_res.begin(); it != vector_res.end(); ++it )
+    for ( uint i = 0; i < vector_size; i++ )
     {
-        if ( abs( *it - 42 ) > 1e-4 )
+        if ( abs( vector_res[i] - vector_val[i] ) > 1e-4 )
         {
             flag = 1;
             break;
         }
     }
-    flag == 0 ? std::cout << "SUCCESS\n" : std::cout << "FAILURE\n";
+    flag == 0 ? std::cout << "===== OPENCL TEST SUCCESS =====\n" : std::cout << "XXXXX OPENCL TEST FAILURE XXXXX\n";
 
+    // Show elapsed time in microseconds
+    std::cout << "C++    execution elapsed time: " << cpp_time << " microseconds" << std::endl;
+    std::cout << "OpenCL execution elapsed time: " << ocl_time << " microseconds" << std::endl;
+    if ( cpp_time >= ocl_time )
+        std::cout << "OpenCL is " << cpp_time/ocl_time << " times faster than C++" << std::endl;
+    else
+        std::cout << "C++is " << ocl_time/cpp_time << " times faster than OpenCL" << std::endl;
     return 0;
 }
