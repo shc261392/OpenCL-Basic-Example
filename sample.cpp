@@ -1,11 +1,18 @@
 #include<iostream>
 #include<fstream>
 #include<vector>
-#include<string.h>
+#include<string.h> // For memcpy()
 #include<string>
-#include<assert.h>
+#include<assert.h> // For OpenCL error code checking macro
+#include<random> // For generation of test data
+#include<chrono> // For high resolution clock
 
 // ----- OpenCL header ----------------------------
+// The structure of header directory is different
+// on Mac OS. To ensure OpenCL headers are included,
+// this macro is added to the program.
+// If you are certain this program will not be
+// executed on Mac OS, this section can be deleted.
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
@@ -14,6 +21,14 @@
 // ------------------------------------------------
 
 // ----- Macro for OpenCL error code checking -----
+// The macro is used for convenience when debugging
+// OpenCL programs. To learn more about the
+// difficulty in debuggin OpenCL programs, read
+// README.md
+// To use the error checking macro, add:
+// ERR();
+// after each OpenCL API call which returns OpenCL
+// error code
 #define ERR()\
     if (err != CL_SUCCESS)\
         std::cout << "OPENCL ERROR: "<< err <<" at file: "<< __FILE__ << ", line: " << __LINE__ << std::endl;\
@@ -21,13 +36,11 @@
 // ------------------------------------------------
 
 // ----- Debugging Info Printer -------------------
+// This line is for printing some debugging info
+// like the platform name, device name, etc.
+// Uncomment the line below to enable printer
 #define DEBUG_VERBOSE
 // ------------------------------------------------
-// ----- Use OpenCL C++ ---------------------------
-#define OCL_CXX
-// ------------------------------------------------
-
-
 
 cl_context CreateContextForDefaultDevice()
 {
@@ -116,35 +129,6 @@ cl_program CreateProgramWithSource( cl_context* context, const char* filename )
     return program;
 }
 
-cl_program CreateProgramWithIL(cl_context *context, std::string filename)
-{
-    cl_int err;
-    void *il;
-    size_t sz;
-
-    // Read SPIR-V binary (.spv) from file
-    std::ifstream in(filename, std::ios::in | std::ios::binary);
-    if (in)
-    {
-        in.seekg( 0, std::ios::end );
-        sz = in.tellg();
-        il = calloc( sz , sizeof(char));
-        in.seekg( 0, std::ios::beg );
-        in.read( (char*)il, sz );
-        in.close();
-    }
-
-    // Create program with IL
-    cl_program program = clCreateProgramWithIL( *context, il, sz, &err);
-    ERR();
-
-    // Build program
-    // Note that for OpenCL C++, no compilers flags can be passed here
-    err = clBuildProgram( program, 0, NULL, NULL, NULL, NULL);
-    ERR();
-    return program;
-}
-
 cl_kernel CreateKernel( cl_program* program, const char* kernel_name )
 {
     cl_int err;
@@ -221,7 +205,7 @@ void EnqueueKernel( cl_command_queue* queue, cl_kernel* kernel, cl_uint work_dim
     err = clGetEventProfilingInfo(event, CL_PROFILING_COMMAND_END, sizeof(time_end), &time_end, NULL);
     ERR();
     double elapsed = time_end - time_start;
-    std::cout << "Kernel execution time: " << elapsed/1000000.0 << " ms" <<std::endl;
+    std::cout << "Kernel execution time: " << elapsed/1.0 << " ns" <<std::endl;
 }
 
 // General OpenCL object release template specialization
@@ -265,12 +249,20 @@ void ReleaseCL( cl_mem* buffer)
     ERR();
 }
 
+template< typename T >
+std::vector<T> rand_gen( size_t size )
+{
+    std::vector<T> vec( size );
+    return vec;
+}
+
+
 int main(int argc, char* argv[])
 {
     typedef float Numeric_Type;
 
     // Create host vectors
-    cl_uint vector_size = 10000000;
+    size_t vector_size = 10000000;
     std::vector<Numeric_Type> vector_a( vector_size, 10 );
     std::vector<Numeric_Type> vector_b( vector_size, 32 );
     std::vector<Numeric_Type> vector_res( vector_size, 0 ) ;
@@ -278,11 +270,7 @@ int main(int argc, char* argv[])
 
     size_t global_work_size = 1000;
 
-    #ifdef OCL_CXX
-    std::string version = "OpenCL C++";
-    #else
     std::string version = "OpenCL C";
-    #endif
     std::string kernel_name = "float_vector_add";
 
     // Create context and command queue
