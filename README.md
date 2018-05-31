@@ -1,4 +1,4 @@
-# Basic Example for OpenCL C and C++
+# Basic Example for OpenCL
 
 This is a basic example for OpenCL programming model, serving a main purpose for being a good reference when new to OpenCL. For simplicity, most OpenCL API calls are wrapped in C++ wrapper functions. Reference the `main` function for the programming flow, and trace details in each wrapper function to understand how exactly the OpenCL host-side API works.
 
