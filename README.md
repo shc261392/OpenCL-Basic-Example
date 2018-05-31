@@ -1,26 +1,36 @@
 # Basic Example for OpenCL C and C++
 
-This is a basic example for both OpenCL C and OpenCL C++, serving a main purpose for being a good reference when new to OpenCL or OpenCL C++. You have to edit the main host program to define whether OpenCL C kernel or OpenCL C++ kernel will be built and run.
+This is a basic example for OpenCL programming model, serving a main purpose for being a good reference when new to OpenCL. For simplicity, most OpenCL API calls are wrapped in C++ wrapper functions. Reference the `main` function for the programming flow, and trace details in each wrapper function to understand how exactly the OpenCL host-side API works.
+
+The OpenCL kernel performs a very simple "Vector Add" operation like C = A + B. Since it is not a compute-intensive operation and OpenCL has some setup overhead, it is possible that the OpenCL kernel is slower in performance compared to C++ sequential code for small vector sizes and global work sizes.
 
 ## Getting Started
 
-* Check the sample.cpp for host code example.
-* Check the kernels/vector_add.cl for OpenCL C kernel code example.
-* Check the kernels/cpp_vector_add.cl for OpenCL C++ kernel code example.
-* Check the Makefile for compilation process of OpenCL C++ kernel to SPIR-V.
+You should be able to run OpenCL on most CPUs and/or GPUs.
+
+A quick way to check if your machine is capable of running OpenCL is to use `clinfo`, simply run:
+
+```
+$ clinfo
+```
+
+If at least one OpenCL platform is shown, your have one or more hardwares that support OpenCL. 
 
 ### Prerequisites
 
-OpenCL C++ program can only be built and run on OpenCL 2.1 or OpenCL 2.2 runtime, since building OpenCL C++ program requires the 2.1/2.2 new API *clCreateProgramWithIL*, as well as runtime support for SPIR-V.
+To run OpenCL programs, you have to install one of the OpenCL runtime/sdk:
 
-Other than the runtime, you will need the following:
+* [AMD APP SDK 3.0](http://debian.nullivex.com/amd/AMD-APP-SDKInstaller-v3.0.130.136-GA-linux64.tar.bz2) - Mirror, since official page is down
+* [Intel SDK for OpenCL](https://software.intel.com/en-us/intel-opencl) - Requires registration
+* [Intel Compute Runtime](https://github.com/intel/compute-runtime)
 
-* [OpenCL C++ Standard Library](https://github.com/KhronosGroup/libclcxx) - implemented by Khronos
-* [SPIR generator/Clang](https://github.com/KhronosGroup/SPIR/tree/spirv-1.1)
+If you do not know which runtime you should use, choose AMD APP SDK.
 
-After cloning these prerequisites and have LLVM installed, please modify the path of LIBCLCXX and LLVM_BIN in the Makefile.
+After installation, environment variables `OCL_INC_DIR` and `OCL_LIB_DIR` should be set to OpenCL include directory and OpenCL lib directory, respectively.
 
-Compile the host code and kernel code (C++ part):
+### Compilation
+
+Compile:
 ```
 make
 ```
@@ -30,13 +40,18 @@ Clean:
 make clean
 ```
 
+### Run
+
+Specify vector size and global work size when running the program.
+
+For example, if you want to run the vector add operation while vector size = 100,000 and global work size = 1,000, run:
+```
+./sample 100000 1000
+```
+
+You could see whether the program is successful or not and the relative speed compared to C++ sequential vector add.
 
 ### About why using clEnqueueMapBuffer
 
-Not related to OpenCL C++ though, just want to keep notes.
-
 * [Intel's Opinion](https://software.intel.com/en-us/articles/getting-the-most-from-opencl-12-how-to-increase-performance-by-minimizing-buffer-copies-on-intel-processor-graphics)
 
-### About programming in OpenCL C++ kernel language
-
-* [OpenCL C to OpenCL C++ Porting Guidelines](https://github.com/OpenCL/OpenCLCXXPortingGuidelines/blob/master/OpenCLCToOpenCLCppPortingGuidelines.md)

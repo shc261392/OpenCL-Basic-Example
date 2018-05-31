@@ -38,7 +38,7 @@
 // ----- Debugging Info Printer -------------------
 // This line is for printing some debugging info
 // like the platform name, device name, etc.
-// Uncomment the line below to enable printer
+// Comment the line below to disable printer
 #define DEBUG_VERBOSE
 // ------------------------------------------------
 
@@ -252,7 +252,9 @@ int main(int argc, char* argv[])
 {
     std::string version = "OpenCL C";
     std::string kernel_name = "float_vector_add";
+    typedef float Numeric_Type;
     size_t vector_size, global_work_size;
+
     // Parse command line arguments
     if ( argc < 3 )
     {
@@ -264,8 +266,6 @@ int main(int argc, char* argv[])
         vector_size = std::stoi(argv[1]);
         global_work_size = std::stoi(argv[2]);
     }
-
-    typedef float Numeric_Type;
 
     // Create host vectors
     std::vector<Numeric_Type> vector_a( vector_size );
