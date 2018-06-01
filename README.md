@@ -2,9 +2,19 @@
 
 This is a basic example for OpenCL programming model, serving a main purpose for being a good reference when new to OpenCL. For simplicity, most OpenCL API calls are wrapped in C++ wrapper functions. Reference the `main` function for the programming flow, and trace details in each wrapper function to understand how exactly the OpenCL host-side API works.
 
-The first example OpenCL performs a very simple "Vector Add" operation like C = A + B. Since it is not a compute-intensive operation and OpenCL has some setup overhead, it is possible that the OpenCL kernel is slower in performance compared to C++ sequential code for small vector sizes and global work sizes.
+The repository contains two example programs, "Vector Add" and "Dot Product", each with independent host code (.cpp) and kernel code (.cl).
 
-The second example is "Dot Product", which is also a BLAS1 operation but with good potential for optimization. Refer to this program to see more techniques used in OpenCL programming such as utilizing local memory, choosing local work size (in other words, the work group size) and work group reduction.
+### Vector Add
+
+A very simple vector operation like C = A + B.
+
+Since it is not a compute-intensive operation and OpenCL has some setup overhead, it is possible that the OpenCL kernel is slower in performance compared to C++ sequential code for small vector sizes and global work sizes.
+
+### Dot Prodcut
+
+The program calculate the inner product of two vectors. This is also a BLAS1 operation but with good potential for optimization.
+
+Refer to this program to see more techniques used in OpenCL programming such as utilizing local memory, choosing local work size (in other words, the work group size) and work group reduction.
 
 ## Getting Started
 
@@ -28,7 +38,7 @@ To run OpenCL programs, you have to install one of the OpenCL runtime/sdk:
 
 AMD SDK is recommended if you do not know which one to use.
 
-##### Installing AMD APP SDK 3.0
+#### Installing AMD APP SDK 3.0
 
 ```
 $ wget http://debian.nullivex.com/amd/AMD-APP-SDKInstaller-v3.0.130.136-GA-linux64.tar.bz2
@@ -37,7 +47,7 @@ $ chmod +x ./AMD-APP-SDK-v3.0.130.136-GA-linux64.sh
 $ ./AMD-APP-SDK-v3.0.130.136-GA-linux64.sh
 ```
 
-##### Setting up OpenCL path for compilation
+#### Setting up OpenCL path for compilation
 
 After installation, environment variables `OCL_INC_DIR` and `OCL_LIB_DIR` should be set to OpenCL include directory and OpenCL lib directory, respectively.
 
