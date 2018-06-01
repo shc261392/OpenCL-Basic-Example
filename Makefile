@@ -7,13 +7,16 @@ CXXFLAGS = -lstdc++ -std=c++11
 INCLUDE = -I ${OCL_INC_DIR}
 LDFLAGS = -L ${OCL_LIB_DIR} -lOpenCL
 
-SRCS = $(wildcard *.cpp)
-BINS = $(SRCS:.cpp=)
+SRCS := $(wildcard *.cpp)
+BINS := $(patsubst %.cpp, %, $(SRCS))
 
-all: host
+MKDIR = mkdir -p build
 
-host: 
-	$(CXX) $(SRCS) -o $(BINS) $(CFLAGS) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS)
+all: $(BINS)
+
+%: %.cpp
+	$(MKDIR)
+	$(CXX) -o build/$@ $< $(CFLAGS) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS)
 
 clean:
-	$(RM) vector_add dot_prod
+	$(RM) build/*

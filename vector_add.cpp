@@ -299,7 +299,8 @@ int main(int argc, char* argv[])
     cl_command_queue queue = CreateCommandQueue( &context );
 
     // Create OpenCL C program
-    cl_program program = CreateProgramWithSource( &context, "kernels/vector_add.cl" );
+    std::string kernel_path = "kernels/" + kernel_name + ".cl";
+    cl_program program = CreateProgramWithSource( &context, kernel_path.c_str() );
 
     // Display information
     std::cout << "=============================================" << std::endl;

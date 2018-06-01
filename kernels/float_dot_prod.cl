@@ -15,5 +15,5 @@ __kernel void float_dot_prod(__global const float* a, __global const float* b, _
     } 
     
     if (lid == 0)
-        result[0] = local_sum[0];
+        result[get_group_id(0)] = local_sum[0];
 }

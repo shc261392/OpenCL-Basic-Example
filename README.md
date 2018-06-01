@@ -2,7 +2,9 @@
 
 This is a basic example for OpenCL programming model, serving a main purpose for being a good reference when new to OpenCL. For simplicity, most OpenCL API calls are wrapped in C++ wrapper functions. Reference the `main` function for the programming flow, and trace details in each wrapper function to understand how exactly the OpenCL host-side API works.
 
-The OpenCL kernel performs a very simple "Vector Add" operation like C = A + B. Since it is not a compute-intensive operation and OpenCL has some setup overhead, it is possible that the OpenCL kernel is slower in performance compared to C++ sequential code for small vector sizes and global work sizes.
+The first example OpenCL performs a very simple "Vector Add" operation like C = A + B. Since it is not a compute-intensive operation and OpenCL has some setup overhead, it is possible that the OpenCL kernel is slower in performance compared to C++ sequential code for small vector sizes and global work sizes.
+
+The second example is "Dot Product", which is also a BLAS1 operation but with good potential for optimization. Refer to this program to see more techniques used in OpenCL programming such as utilizing local memory, choosing local work size (in other words, the work group size) and work group reduction.
 
 ## Getting Started
 
@@ -65,12 +67,12 @@ Specify vector size and global work size when running the program.
 
 For example, if you want to run the vector add operation while vector size = 100,000 and global work size = 1,000, run:
 ```
-./sample 100000 1000
+./build/vector_add 100000 1000
 ```
 
-You could see whether the program is successful or not and the relative speed compared to C++ sequential vector add.
+You could see whether the program is successful or not and the relative speed compared to C++ sequential version.
 
-### About why using clEnqueueMapBuffer
+### About why using clEnqueueMapBuffer over clEnqueueRead/WriteBuffer
 
 * [Intel's Opinion](https://software.intel.com/en-us/articles/getting-the-most-from-opencl-12-how-to-increase-performance-by-minimizing-buffer-copies-on-intel-processor-graphics)
 
