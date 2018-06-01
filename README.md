@@ -45,6 +45,8 @@ $ export OCL_IND_DIR=$AMDAPPSDKROOT/include
 $ export OCL_LIB_IDR=$AMDAPPSDKROOT/lib/x86_64
 ```
 
+Alternatively, you could just modify the compiling flags in Makefile.
+
 ### Compilation
 
 Compile:

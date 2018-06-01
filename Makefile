@@ -16,4 +16,4 @@ host:
 	$(CXX) $(SRCS) -o $(BINS) $(CFLAGS) $(CXXFLAGS) $(INCLUDE) $(LDFLAGS)
 
 clean:
-	$(RM) sample
+	$(RM) vector_add dot_prod
