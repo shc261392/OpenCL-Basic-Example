@@ -20,13 +20,30 @@ If at least one OpenCL platform is shown, your have one or more hardwares that s
 
 To run OpenCL programs, you have to install one of the OpenCL runtime/sdk:
 
-* [AMD APP SDK 3.0](http://debian.nullivex.com/amd/AMD-APP-SDKInstaller-v3.0.130.136-GA-linux64.tar.bz2) - Mirror, since official page is down
+* [AMD APP SDK 3.0](http://debian.nullivex.com/amd/AMD-APP-SDKInstaller-v3.0.130.136-GA-linux64.tar.bz2) - Mirror file for linux x86_64
 * [Intel SDK for OpenCL](https://software.intel.com/en-us/intel-opencl) - Requires registration
 * [Intel Compute Runtime](https://github.com/intel/compute-runtime)
 
-If you do not know which runtime you should use, choose AMD APP SDK.
+AMD SDK is recommended if you do not know which one to use.
+
+##### Installing AMD APP SDK 3.0
+
+```
+$ wget http://debian.nullivex.com/amd/AMD-APP-SDKInstaller-v3.0.130.136-GA-linux64.tar.bz2
+$ tar jxvf AMD-APP-SDKInstaller-v3.0.130.136-GA-linux64.tar.bz2
+$ chmod +x ./AMD-APP-SDK-v3.0.130.136-GA-linux64.sh
+$ ./AMD-APP-SDK-v3.0.130.136-GA-linux64.sh
+```
+
+##### Setting up OpenCL path for compilation
 
 After installation, environment variables `OCL_INC_DIR` and `OCL_LIB_DIR` should be set to OpenCL include directory and OpenCL lib directory, respectively.
+
+If you are using AMD APP SDK, run:
+```
+$ export OCL_IND_DIR=$AMDAPPSDKROOT/include
+$ export OCL_LIB_IDR=$AMDAPPSDKROOT/lib/x86_64
+```
 
 ### Compilation
 
